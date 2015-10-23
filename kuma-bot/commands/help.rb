@@ -10,7 +10,7 @@ module KumaBot
 	*Translator: Bing Translate*```kumakun t {to} {phase} [--from {from}]\nkumakun t list```
 	*Weather: Yahoo! Weather*```kumakun w {location}```
 	*Tabelog: be patient and wait for query results*```kumakun tabelog {station} {keyword} [--(random|top)N]```
-	*Proxy: now using www.getproxy.jp but not stable, considering changing to another site*```kumakun proxy```
+	*Proxy: Fetch proxy from www.getproxy.jp*```kumakun proxy {country_code} [--list]```
 	"
       end
     end

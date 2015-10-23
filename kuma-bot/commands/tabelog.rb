@@ -27,7 +27,7 @@ module KumaBot
           end
 
           proxy = "117.135.250.136:81"
-          # proxy = Proxy.get_proxy
+          # proxy = Proxy.get_proxy(Proxy.fetch_proxy_list("US"))
           station_code = index[location]
 
           # calc max_page of restaurant list
@@ -53,12 +53,11 @@ module KumaBot
 
           # choose
           (1..limit).each do |i|
+            idx = 0
             case mode
             when "random"
               idx = Random.new.rand(restaurant_links.length)
             when "top"
-              idx = 0
-            else
               idx = 0
             end
             url = restaurant_links.delete_at(idx)

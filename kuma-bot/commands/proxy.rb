@@ -1,17 +1,22 @@
 module KumaBot
   module Commands
     class Proxy < SlackRubyBot::Commands::Base
-      match(/^kumakun proxy$/) do |client, data, match|
-        proxy = get_proxy
-        if proxy == ""
-          send_message client, data.channel, "No available proxy now :("
+      match(/^kumakun proxy\s+(?<expression>.+?)$/) do |client, data, match|
+        expression = match['expression'].strip
+        if expression =~ /(.+?)\s+--list/
+          area = $1
+          send_message client, data.channel, fetch_proxy_list(area).join("\n")
         else
-          send_message client, data.channel, proxy
+          proxy = get_proxy(fetch_proxy_list(expression))
+          if proxy == ""
+            send_message client, data.channel, "No available proxy now :("
+          else
+            send_message client, data.channel, proxy
+          end
         end
       end
 
-      def self.get_proxy
-        list = fetch_proxy_list
+      def self.get_proxy(list)
         pm = Manager.new(list, 15)
         if pm.proxy_available?
           pm.available_proxy.to_s
@@ -20,10 +25,11 @@ module KumaBot
         end
       end
 
-      def self.fetch_proxy_list
+      def self.fetch_proxy_list(area)
+        url = "http://www.getproxy.jp/proxyapi?ApiKey=9fe2eac4e342725ac9c595ba7f0e9be1d09aa02b&area=#{area}&sort=requesttime&orderby=asc"
+        html = `curl '#{url}'`
         list = Array.new
-        html = `curl 'http://www.getproxy.jp/america'`
-        html.scan(/<strong>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{2,5})<\/strong>/).each do |p|
+        html.scan(/<ip>(.+?)<\/ip>/).each do |p|
           list << p[0]
         end
         list
