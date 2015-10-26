@@ -9,7 +9,7 @@ module KumaBot
 	*Calculator*```kumakun ={expression}```
 	*Translator: Bing Translate*```kumakun t {to} {phase} [--from {from}]\nkumakun t list```
 	*Weather: Yahoo! Weather*```kumakun w {location}```
-	*Tabelog: be patient and wait for query results*```kumakun tabelog {station} {keyword} [--(random|top)N]```
+	*Tabelog: be patient and wait for query results*```kumakun tabelog {station} {keyword} [--(random|top)N] [--costN]```
 	*Proxy: Fetch proxy from www.getproxy.jp*```kumakun proxy {country_code} [--list]```
 	"
       end

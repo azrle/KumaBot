@@ -4,10 +4,10 @@ require 'nokogiri'
 module KumaBot
   module Commands
     class Tabelog < SlackRubyBot::Commands::Base
-      index = Hash.new
+      station_index = Hash.new
       IO.readlines("config/tabelog_area_code").each do |line|
         parts = line.split(/\t/)
-        index[parts[1].chomp!] = parts[0]
+        station_index[parts[1].chomp!] = parts[0]
       end
 
       match(/^kumakun tabelog\s+(?<location>.+?)\s+(?<expression>.+)$/) do |client, data, match|
@@ -15,23 +15,34 @@ module KumaBot
         expression = match['expression'].strip
 
         # location matched
-        if index.has_key? location
-          mode = "top"
-          limit = 5
-          if expression =~ /(.+)\s+--(random|top)(\d+)/
-            query = $1
-            mode = $2
-            limit = $3.to_i if $3.to_i <= 20
+        if station_index.has_key? location
+          keyword = ""
+          mode    = "top"
+          limit   = 5
+          cost    = 0
+
+          # mode
+          if expression =~ /--(random|top)(\d+)/
+            mode = $1
+            limit = $2.to_i if $2.to_i <= 20
+          end
+          # cost
+          if expression =~ /--cost(\d+)/
+            cost = ($1.to_f / 1000).ceil.to_i
+          end
+          # keyword
+          if expression =~ /([^\s]+)\s+--/
+            keyword = $1
           else
-            query = expression
+            keyword = expression
           end
 
           proxy = "117.135.250.136:81"
           # proxy = Proxy.get_proxy(Proxy.fetch_proxy_list("US"))
-          station_code = index[location]
+          station_code = station_index[location]
 
           # calc max_page of restaurant list
-          search_url = "http://tabelog.com/#{station_code}/rstLst/1/?SrtT=rt&sw=#{query}"
+          search_url = "http://tabelog.com/#{station_code}/rstLst/?SrtT=rt&sw=#{keyword}&LstCos=0&LstCosT=#{cost}"
           html = `curl -x #{proxy} '#{search_url}'`
           if html =~ /全 <span class="text-num fs15"><strong>(\d+)<\/strong><\/span> 件/
             if $1.to_i > 180
@@ -44,7 +55,7 @@ module KumaBot
           # get restaurant list
           restaurant_links = Array.new
           (1..max_page.to_i).each do |page|
-            search_url = "http://tabelog.com/#{station_code}/rstLst/#{page}/?SrtT=rt&sw=#{query}"
+            search_url = "http://tabelog.com/#{station_code}/rstLst/#{page}/?SrtT=rt&sw=#{keyword}&LstCosT=#{cost}"
             html = `curl -x #{proxy} '#{search_url}'`
             html.scan(/data-rd-url=".*?(http:\/\/tabelog\.com.+?)" rel="ranking-num"/).each do |url|
               restaurant_links << url[0]
@@ -62,13 +73,20 @@ module KumaBot
             end
             url = restaurant_links.delete_at(idx)
             info = parse_url(url, proxy)
-            send_message client, data.channel, "*#{info["name"]}*\nGenre: #{info["genre"]}\nRate: #{info["rate"]}\nAddress: #{info["addr"]}\nWebpage: #{info["url"]}"
+            send_message client, data.channel, "
+==========================================================
+*#{info["name"]}*
+      Genre: #{info["genre"]}
+      Rate: #{info["rate"]}
+      Address: #{info["addr"]}
+      Webpage: #{info["url"]}
+            "
           end
 
         # location doesn't match, but we can guess
         else
           guess = ""
-          index.keys.each do |l|
+          station_index.keys.each do |l|
             if Levenshtein.normalized_distance(l, location) <= 0.3 || l.match(location)
               guess += "#{l}\n"
             end
