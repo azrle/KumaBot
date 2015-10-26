@@ -31,7 +31,7 @@ module KumaBot
           station_code = index[location]
 
           # calc max_page of restaurant list
-          search_url = "http://tabelog.com/#{station_code}/rstLst/1/?SrtT=rt&sk=#{query}"
+          search_url = "http://tabelog.com/#{station_code}/rstLst/1/?SrtT=rt&sw=#{query}"
           html = `curl -x #{proxy} '#{search_url}'`
           if html =~ /全 <span class="text-num fs15"><strong>(\d+)<\/strong><\/span> 件/
             if $1.to_i > 180
@@ -44,7 +44,7 @@ module KumaBot
           # get restaurant list
           restaurant_links = Array.new
           (1..max_page.to_i).each do |page|
-            search_url = "http://tabelog.com/#{station_code}/rstLst/#{page}/?SrtT=rt&sk=#{query}"
+            search_url = "http://tabelog.com/#{station_code}/rstLst/#{page}/?SrtT=rt&sw=#{query}"
             html = `curl -x #{proxy} '#{search_url}'`
             html.scan(/data-rd-url=".*?(http:\/\/tabelog\.com.+?)" rel="ranking-num"/).each do |url|
               restaurant_links << url[0]
